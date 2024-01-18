@@ -1,4 +1,3 @@
-# PSNetboxFunctions
 Powershell API functions for Netbox
 <br><br>
 This repository will keep updating as the functions I use internally at work start growing.<br>
