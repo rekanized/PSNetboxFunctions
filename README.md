@@ -8,8 +8,11 @@ At this moment it is mostly used for Synchronization activities to retrieve data
 * PSLoggingFunctions (https://github.com/rakelord/PSLoggingFunctions)
 
 # Getting started
-## Download this module folder and all Required Powershell Modules and place them in your modules folder<br>
-Windows default - "C:\Program Files\WindowsPowerShell\Modules"
+## Download this PowerShell Module and all Required PowerShell Modules and place them in your PSModulePath folder<br>
+You can use this command to show your available locations
+```powershell 
+$env:PSModulePath -split ";"
+``` 
 
 # Functions examples
 ## Connect to the API
