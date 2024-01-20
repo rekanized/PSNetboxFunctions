@@ -7,12 +7,15 @@ At this moment it is mostly used for Synchronization activities to retrieve data
 # Required modules
 * PSLoggingFunctions (https://github.com/rakelord/PSLoggingFunctions)
 
-# Getting started
-## Download this PowerShell Module and all Required PowerShell Modules and place them in your PSModulePath folder<br>
-You can use this command to show your available locations
+# Installation
 ```powershell 
-$env:PSModulePath -split ";"
-``` 
+Install-Module -Name PSNetboxFunctions
+```
+
+# Offline Installation
+Just run the OfflineInstallation.ps1 as Administrator
+PS: You need to download all the files into the same directory and then run the script, they will then be copied to the Users PSModuleDirectory.
+
 
 # Functions examples
 ## Connect to the API
