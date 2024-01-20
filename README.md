@@ -13,7 +13,7 @@ Install-Module -Name PSNetboxFunctions
 ```
 
 # Offline Installation
-Just run the OfflineInstallation.ps1 as Administrator<br>
+Just run the OfflineInstallation.ps1<br>
 PS: You need to download all the files into the same directory and then run the script, they will then be copied to the Users PSModuleDirectory.
 
 
