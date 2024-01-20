@@ -18,7 +18,7 @@ $env:PSModulePath -split ";"
 ## Connect to the API
 First you are going to have to create a API Token which is explained in Netbox official API documentation.
 <br><br>
-- LogToFile parameter is connected to the PSLoggingFunctions module and is used for easy logging.
+- -LogToFile parameter is connected to the PSLoggingFunctions module and is used for easy logging.
 
 ```powershell
 Connect-NetboxAPI -Url "<YOUR NETBOX URL>" -Token "<API TOKEN>" -LogToFile "<True/False>"
