@@ -4,13 +4,12 @@ This repository will keep updating as the functions I use internally at work sta
 <br>
 At this moment it is mostly used for Synchronization activities to retrieve data and put it somewhere else, but when we start making changes to objects this will be further updated.
 
-# Required modules
-* PSLoggingFunctions (https://github.com/rakelord/PSLoggingFunctions)
-
 # Installation
 ```powershell 
 Install-Module -Name PSNetboxFunctions
 ```
+This will also install Dependency
+* PSLoggingFunctions (https://github.com/rakelord/PSLoggingFunctions)
 
 # Offline Installation
 Just run the OfflineInstallation.ps1<br>
