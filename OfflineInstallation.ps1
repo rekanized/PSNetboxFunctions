@@ -1,6 +1,7 @@
 $PSModulePath = "$HOME\Documents\WindowsPowerShell\Modules"
 $Files = Get-ChildItem -Path ".\" -Include ("*.psm1","*.psd1") -recurse
-$NewModulePath = $PSModulePath+"\$($Files[0].Directory.Name)"
+$ModuleName = "PSNetboxFunctions"
+$NewModulePath = $PSModulePath+"\"+$ModuleName
 if (!(Test-Path -Path "$PSModulePath")){
     New-Item -Path $NewModulePath -ItemType Directory -Force
 }
