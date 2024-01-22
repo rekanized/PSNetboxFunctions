@@ -91,7 +91,7 @@ Function New-NetboxTenant {
     -tags ("Tag1","Tag2")
     
     .PARAMETER LogToFile
-    Connect to PSLoggingFucntions module, read more on GitHub, it create a Log folder in your directory if set to True
+    Connect to PSLoggingFunctions module, read more on GitHub, it create a Log folder in your directory if set to True
     
     .EXAMPLE
     New-NetboxTenant -Url "https://myinternal.domain.local" -tenantName "TurboTenant" -tags ("tag123","cooltenant") -objectData @{custom_fields=@{customer_id = "123123"}} -LogToFile $false
