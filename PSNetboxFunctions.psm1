@@ -14,12 +14,12 @@ Function Connect-NetboxAPI {
 
     Write-Log -Message "Connecting to Netbox API" -Active $LogToFile
 
-    $testConnection = Invoke-RestMethod -Method GET -Uri "$Url/api/dcim/sites/" -Headers $netboxAuthenticationHeader
+    $testConnection = Invoke-RestMethod -Method GET -Uri "$Url/api/dcim/devices/?limit=1" -Headers $netboxAuthenticationHeader
     $global:NetboxAuthenticated = $false
     if ($testConnection){
         $global:NetboxAuthenticated = $true
         Write-Log -Message "Netbox Authenticated: $NetboxAuthenticated" -Active $LogToFile
-        Write-Host "Netbox Authenticated: $NetboxAuthenticated`nUse Header Connection Variable = "+'$netboxAuthenticationHeader'
+        Write-Host "Netbox Authenticated: $NetboxAuthenticated`nUse Header Connection Variable ="'$netboxAuthenticationHeader'
         $global:netboxAuthenticationHeader = $netboxAuthenticationHeader
         return ""
     }
@@ -63,5 +63,77 @@ Function Get-NetboxObjects {
             $uri = $Results.next
         } until (!($uri))
         return $Devices
+    }
+}
+
+Function New-NetboxTenant {
+    <#
+    .SYNOPSIS
+    Create a new netbox tenant (customer)
+    
+    .DESCRIPTION
+    Create new tenants, include tags or other object data if needed.
+    
+    .PARAMETER Url
+    Your netbox Url
+    
+    .PARAMETER tenantName
+    Name of the new Tenant (customer)
+    
+    .PARAMETER objectData
+    If you have other data you want to add as well.
+    You supply it like a normal powershell object
+    Example:
+    -objectData @{custom_fields=@{customer_id = "CUSTOMERID"}}
+    
+    .PARAMETER tags
+    If you have any tags you want to add, it is in a string array
+    -tags ("Tag1","Tag2")
+    
+    .PARAMETER LogToFile
+    Connect to PSLoggingFucntions module, read more on GitHub, it create a Log folder in your directory if set to True
+    
+    .EXAMPLE
+    New-NetboxTenant -Url "https://myinternal.domain.local" -tenantName "TurboTenant" -tags ("tag123","cooltenant") -objectData @{custom_fields=@{customer_id = "123123"}} -LogToFile $false
+    
+    #>
+    param(
+        [parameter(mandatory)]
+        $Url,
+        [parameter(mandatory)]
+        $tenantName,
+        $objectData,
+        [string[]]$tags,
+        [parameter(mandatory)]
+        [ValidateSet("True","False")]
+        $LogToFile
+    )
+    if (Find-NetboxConnection){
+        $tenantName = Remove-BadStringCharacters($tenantName)
+        $tenantObject = @{
+            name = $tenantName
+            slug = Remove-SpecialCharacters($tenantName)
+        }
+        if ($objectData){
+            $tenantObject += $objectData
+        }
+        if ($tags){
+            $tagObject = @{
+                tags = @()
+            }
+            foreach ($tag in $tags){
+                $tagObject.tags += @{
+                    name = "$tag"
+                    slug = "$tag"
+                }
+            }
+            $tenantObject += $tagObject
+        }
+        
+        $tenantObject = $tenantObject | ConvertTo-Json -Compress
+        
+        Invoke-TryCatchLog -LogType CREATE -InfoLog "Creating new Netbox Tenant: $tenantName" -LogToFile $LogToFile -ScriptBlock {
+            Invoke-RestMethod -Method POST -Uri "$Url/api/tenancy/tenants/" -Headers $netboxAuthenticationHeader -Body $tenantObject -ContentType "application/json"
+        }
     }
 }
