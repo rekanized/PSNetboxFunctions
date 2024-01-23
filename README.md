@@ -50,7 +50,7 @@ $customAddition = @{
     }
 }
 
-New-NetboxTenant -tenantName "TurboTenant" -tags ("tag123","cooltenant") -objectData $ownAddition -LogToFile $false
+New-NetboxTenant -tenantName "TurboTenant" -tags ("tag123","cooltenant") -objectData $customAddition -LogToFile $false
 
 #if you have nothing extra to add just skip objectData and if there are no tags, you can skip that aswell.
 New-NetboxTenant -tenantName "TurboTenant" -LogToFile $false
