@@ -294,3 +294,32 @@ function Remove-NetboxObject {
         }
     }
 }
+
+function Update-NetboxTenant {
+    # NOT FINISHED
+    param(
+        [parameter(mandatory)]
+        $tenantName,
+        $objectData,
+        [string[]]$tags,
+        [parameter(mandatory)]
+        [ValidateSet("True","False")]
+        $LogToFile
+    )
+
+    if (Find-NetboxConnection){
+        $tenantObject = @{
+            name = $tenantName
+            slug = Remove-SpecialCharacters($tenantName)
+        }
+        if ($tenantObject){
+            $tenantObject += $objectData
+        }
+        if ($tags){
+            $tenantObject += BuildTagsObject -Tags $tags
+        }
+        Invoke-TryCatchLog -LogType UPDATE -InfoLog "Updating Netbox Tenant: $($tenantName)" -LogToFile $LogToFile -ScriptBlock {
+            #Invoke-RestMethod -Uri "$($netboxUrl)/api/tenancy/tenants/$($NetboxTenant.id)/" -Method PUT -Headers $netboxAuthenticationHeader -Body $tenantObject -ContentType "application/json"
+        }
+    }
+}
