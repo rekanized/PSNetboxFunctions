@@ -27,8 +27,46 @@ Connect-NetboxAPI -Url "<YOUR NETBOX URL>" -Token "<API TOKEN>" -LogToFile "<Tru
 ```
 You will retrieve a global variable in your script called '$netboxAuthenticationHeader' the variable can be used with your own Invoke-RestMethod commands if needed, otherwise you can use the module functions which have this variable implemented already.
 
-## Retrieve Netbox Objects
-The parameter APIEndpoint is based on the Netbox documentation, so for example if you want to retrieve all devices from dcim you set it to '/api/dcim/devices/' if you want to get tenants you type '/api/tenancy/tenants/'
+## Retrieve Any Netbox Objects
+The parameter APIEndpoint is based on the Netbox documentation, so for example if you want to retrieve all devices from dcim you set it to '/api/dcim/devices/' if you want to get tenants you type '/api/tenancy/tenants/'<br>
+API Permissions need to be set for the objects you want to retrieve!
 ```powershell
-Get-NetboxObjects -Url "<YOUR NETBOX URL>" -APIEndpoint "<API ENDPOINT>" -LogToFile "<True/False>"
+Get-NetboxObjects -APIEndpoint "<API ENDPOINT>" -LogToFile "<True/False>"
+```
+
+## Delete Any Netbox Object
+API Permissions need to be set for the objects you want to delete!
+```powershell
+#Example deleting a Tenant with ID 235
+Remove-NetboxObject -APIEndpoint "/api/tenancy/tenants/" -ObjectID "235" -LogToFile $True
+```
+
+## New-NetboxTenant
+```powershell
+# If you want to add something to the customer value that does not already exist, for example a customer id.
+$customAddition = @{
+    custom_fields = @{
+        customer_id = "123123"
+    }
+}
+
+New-NetboxTenant -tenantName "TurboTenant" -tags ("tag123","cooltenant") -objectData $ownAddition -LogToFile $false
+
+#if you have nothing extra to add just skip objectData and if there are no tags, you can skip that aswell.
+New-NetboxTenant -tenantName "TurboTenant" -LogToFile $false
+```
+
+## New-NetboxSite
+```powershell
+# If you want to add a value to the site that does not already exist, for example a customer id.
+$customAddition = @{
+    custom_fields = @{
+        customer_id = "123123"
+    }
+}
+
+New-NetboxSite -siteName "My-road 12B" -tags ("tag123","coolsite") -objectData $customAddition -LogToFile $false
+
+# if you have nothing extra to add just skip objectData and if there are no tags, you can skip that aswell.
+New-NetboxSite -siteName "My-road 12B" -LogToFile $false
 ```

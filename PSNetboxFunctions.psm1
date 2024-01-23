@@ -77,7 +77,7 @@ Function Get-NetboxObjects {
     
     .EXAMPLE
     This retrieves all Dcim Devices and Gives you a log in the script root directory
-    Get-NetboxObjects -Url "https://netbox.internal.local" -APIEndpoint "/api/dcim/devices/" -LogToFile $True
+    Get-NetboxObjects -APIEndpoint "/api/dcim/devices/" -LogToFile $True
     
     #>
     Param(
@@ -132,17 +132,17 @@ Function New-NetboxTenant {
     Connect to PSLoggingFunctions module, read more on GitHub, it create a Log folder in your directory if set to True
     
     .EXAMPLE
-    # If you want to add something to the customer value that does not already exist, for example a customer id.
+    # If you want to add a value to the customer that does not already exist, for example a customer id.
     $customAddition = @{
         custom_fields = @{
             customer_id = "123123"
         }
     }
 
-    New-NetboxTenant -Url "https://myinternal.domain.local" -tenantName "TurboTenant" -tags ("tag123","cooltenant") -objectData $ownAddition -LogToFile $false
+    New-NetboxTenant -tenantName "TurboTenant" -tags ("tag123","cooltenant") -objectData $customAddition -LogToFile $false
 
     if you have nothing extra to add just skip objectData and if there are no tags, you can skip that aswell.
-    New-NetboxTenant -Url "https://myinternal.domain.local" -tenantName "TurboTenant" -LogToFile $false
+    New-NetboxTenant -tenantName "TurboTenant" -LogToFile $false
     
     #>
     param(
@@ -175,6 +175,43 @@ Function New-NetboxTenant {
 }
 
 function New-NetboxSite {
+    <#
+    .SYNOPSIS
+    Create a new netbox site (address/location)
+    
+    .DESCRIPTION
+    Create new sites, include tags or other object data if needed.
+    
+    .PARAMETER siteName
+    Name of the new site (address/location)
+    
+    .PARAMETER objectData
+    If you have other data you want to add as well.
+    You supply it like a normal powershell object
+    Example:
+    -objectData @{custom_fields=@{customer_id = "CUSTOMERID"}}
+    
+    .PARAMETER tags
+    If you have any tags you want to add, it is in a string array
+    -tags ("Tag1","Tag2")
+    
+    .PARAMETER LogToFile
+    Connect to PSLoggingFunctions module, read more on GitHub, it create a Log folder in your directory if set to True
+    
+    .EXAMPLE
+    # If you want to add a value to the site that does not already exist, for example a customer id.
+    $customAddition = @{
+        custom_fields = @{
+            customer_id = "123123"
+        }
+    }
+
+    New-NetboxSite -siteName "My-road 12B" -tags ("tag123","coolsite") -objectData $customAddition -LogToFile $false
+
+    if you have nothing extra to add just skip objectData and if there are no tags, you can skip that aswell.
+    New-NetboxSite -siteName "My-road 12B" -LogToFile $false
+    
+    #>
     param(
         [parameter(mandatory)]
         $siteName,
@@ -237,7 +274,7 @@ function Remove-NetboxObject {
     Connect to PSLoggingFunctions module, read more on GitHub, it create a Log folder in your directory if set to True
     
     .EXAMPLE
-    Remove-NetboxObject -Url "https://netbox.internal.local" -APIEndpoint "/api/tenancy/tenants/" -ObjectID "235" -LogToFile $True
+    Remove-NetboxObject -APIEndpoint "/api/tenancy/tenants/" -ObjectID "235" -LogToFile $True
     
     .NOTES
     You need API permissions for the objects you want to delete.
