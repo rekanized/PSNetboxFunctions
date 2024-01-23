@@ -10,6 +10,7 @@ Install-Module -Name PSNetboxFunctions
 ```
 This will also install Dependency
 * PSLoggingFunctions (https://github.com/rakelord/PSLoggingFunctions)
+* PSHelpFunctions (https://github.com/rakelord/PSHelpFunctions)
 
 # Offline Installation
 Just run the OfflineInstallation.ps1<br>
