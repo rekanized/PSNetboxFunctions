@@ -1,4 +1,29 @@
 Function Connect-NetboxAPI {
+    <#
+    .SYNOPSIS
+    Connect to the Netbox API
+    
+    .DESCRIPTION
+    Connect to the Netbox API and generate a Token variable that can be used with your own Invoke-RestMethod commands '$netboxAuthenticationHeader'
+    All Functions within this Module already has this variable implemented.
+    For the connection verification your API account need access to read /api/dcim/devices/, this is used to verify that you have a valid connection to the API. (it only retrieves 1 device for the verification)
+    
+    .PARAMETER Url
+    Your Netbox Url
+    
+    .PARAMETER Token
+    Your API Token
+    
+    .PARAMETER LogToFile
+    Connect to PSLoggingFunctions module, read more on GitHub, it create a Log folder in your directory if set to True
+    
+    .EXAMPLE
+    Connect-NetboxAPI -Url "https://netbox.internal.local" -Token se651bsb651sdf132adsfg1asd65f46b5 -LogToFile $True
+    
+    OUTPUT
+    Netbox Authenticated: True
+    Use Header Connection Variable = $netboxAuthenticationHeader
+    #>
     Param(
         [parameter(mandatory)]
         $Url,
@@ -37,6 +62,27 @@ Function Find-NetboxConnection {
 }
 
 Function Get-NetboxObjects {
+    <#
+    .SYNOPSIS
+    Retrieve any Netbox Objects
+    
+    .DESCRIPTION
+    You can retrieve any Netbox Objects through the API by supplying the parameter APIEndpoint with the sort of objects you want to retrieve.
+    
+    .PARAMETER Url
+    Your Netbox Url
+    
+    .PARAMETER APIEndpoint
+    The APIEndpoint (look in Netbox official API) it looks like this example: '/api/dcim/devices/'
+    
+    .PARAMETER LogToFile
+    Connect to PSLoggingFunctions module, read more on GitHub, it create a Log folder in your directory if set to True
+    
+    .EXAMPLE
+    This retrieves all Dcim Devices and Gives you a log in the script root directory
+    Get-NetboxObjects -Url "https://netbox.internal.local" -APIEndpoint "/api/dcim/devices/" -LogToFile $True
+    
+    #>
     Param(
         [parameter(mandatory)]
         $Url,
@@ -141,6 +187,50 @@ Function New-NetboxTenant {
         
         Invoke-TryCatchLog -LogType CREATE -InfoLog "Creating new Netbox Tenant: $tenantName" -LogToFile $LogToFile -ScriptBlock {
             Invoke-RestMethod -Method POST -Uri "$Url/api/tenancy/tenants/" -Headers $netboxAuthenticationHeader -Body $tenantObject -ContentType "application/json"
+        }
+    }
+}
+
+function Remove-NetboxObject {
+    <#
+    .SYNOPSIS
+    Remove any sort of Netbox Object by supplying its ID
+    
+    .DESCRIPTION
+    Remove any sort of Netbox Object by supplying its ID, APIEndpoint need to be set like  this example: '/api/tenancy/tenants/'
+    
+    .PARAMETER Url
+    Your Netbox URL
+    
+    .PARAMETER APIEndpoint
+    The APIEndpoint for example: /api/tenancy/tenants/
+    
+    .PARAMETER ObjectID
+    The ID of the object you want to delete/remove
+    
+    .PARAMETER LogToFile
+    Connect to PSLoggingFunctions module, read more on GitHub, it create a Log folder in your directory if set to True
+    
+    .EXAMPLE
+    Remove-NetboxObject -Url "https://netbox.internal.local" -APIEndpoint "/api/tenancy/tenants/" -ObjectID "235" -LogToFile $True
+    
+    .NOTES
+    You need API permissions for the objects you want to delete.
+    #>
+    Param(
+        [parameter(mandatory)]
+        $Url,
+        [parameter(mandatory)]
+        $APIEndpoint,
+        [parameter(mandatory)]
+        $ObjectID,
+        [parameter(mandatory)]
+        [ValidateSet("True","False")]
+        $LogToFile
+    )
+    if (Find-NetboxConnection){
+        Invoke-TryCatchLog -LogType DELETE -InfoLog "Removing Netbox Object: $($APIEndpoint) - $($ObjectID)" -LogToFile $LogToFile -ScriptBlock {
+            Invoke-RestMethod -Method DELETE -Uri "$($Url)$($APIEndpoint)$($ObjectID)/" -Headers $netboxAuthenticationHeader -Body $DeleteObject -ContentType "application/json"
         }
     }
 }
