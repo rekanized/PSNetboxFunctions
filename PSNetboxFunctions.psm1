@@ -94,7 +94,14 @@ Function New-NetboxTenant {
     Connect to PSLoggingFunctions module, read more on GitHub, it create a Log folder in your directory if set to True
     
     .EXAMPLE
-    New-NetboxTenant -Url "https://myinternal.domain.local" -tenantName "TurboTenant" -tags ("tag123","cooltenant") -objectData @{custom_fields=@{customer_id = "123123"}} -LogToFile $false
+    # If you want to add something to the customer value that does not already exist, for example a customer id.
+    $customAddition = @{
+        custom_fields = @{
+            customer_id = "123123"
+        }
+    }
+
+    New-NetboxTenant -Url "https://myinternal.domain.local" -tenantName "TurboTenant" -tags ("tag123","cooltenant") -objectData $ownAddition -LogToFile $false
     
     #>
     param(
