@@ -6,7 +6,6 @@ Function Connect-NetboxAPI {
     .DESCRIPTION
     Connect to the Netbox API and generate a Token variable that can be used with your own Invoke-RestMethod commands '$netboxAuthenticationHeader'
     All Functions within this Module already has this variable implemented.
-    For the connection verification your API account need access to read /api/dcim/devices/, this is used to verify that you have a valid connection to the API. (it only retrieves 1 device for the verification)
     
     .PARAMETER Url
     Your Netbox Url
@@ -39,12 +38,13 @@ Function Connect-NetboxAPI {
 
     Write-Log -Message "Connecting to Netbox API" -Active $LogToFile
 
-    $testConnection = Invoke-RestMethod -Method GET -Uri "$Url/api/dcim/devices/?limit=1" -Headers $netboxAuthenticationHeader
+    $testConnection = Invoke-RestMethod -Method GET -Uri "$Url/api/users/tokens/" -Headers $netboxAuthenticationHeader
     $global:NetboxAuthenticated = $false
     if ($testConnection){
         $global:NetboxAuthenticated = $true
-        Write-Log -Message "Netbox Authenticated: $NetboxAuthenticated" -Active $LogToFile
-        Write-Host "Netbox Authenticated: $NetboxAuthenticated`nUse Header Connection Variable ="'$netboxAuthenticationHeader'
+        $global:netboxUrl = $Url
+        Write-Log -Message "Netbox Authenticated: $NetboxAuthenticated`nNetbox URL = $netboxUrl" -Active $LogToFile
+        Write-Host "Netbox Authenticated: $NetboxAuthenticated`nNetbox URL = $netboxUrl`nUse Header Connection Variable ="'$netboxAuthenticationHeader'
         $global:netboxAuthenticationHeader = $netboxAuthenticationHeader
         return ""
     }
@@ -69,9 +69,6 @@ Function Get-NetboxObjects {
     .DESCRIPTION
     You can retrieve any Netbox Objects through the API by supplying the parameter APIEndpoint with the sort of objects you want to retrieve.
     
-    .PARAMETER Url
-    Your Netbox Url
-    
     .PARAMETER APIEndpoint
     The APIEndpoint (look in Netbox official API) it looks like this example: '/api/dcim/devices/'
     
@@ -85,8 +82,6 @@ Function Get-NetboxObjects {
     #>
     Param(
         [parameter(mandatory)]
-        $Url,
-        [parameter(mandatory)]
         $APIEndpoint,
         [parameter(mandatory)]
         [ValidateSet("True","False")]
@@ -94,7 +89,7 @@ Function Get-NetboxObjects {
     )
     if (Find-NetboxConnection){
         $Devices = @()
-        $uri = "$($Url)$($APIEndpoint)?limit=0"
+        $uri = "$($netboxUrl)$($APIEndpoint)?limit=0"
         do {
             $uri = $uri -replace("http://","https://")
             $Results = Invoke-TryCatchLog -InfoLog "Retrieving 1000 Netbox Objects from Endpoint: $APIEndpoint" -LogToFile $LogToFile -ScriptBlock {
@@ -119,9 +114,6 @@ Function New-NetboxTenant {
     
     .DESCRIPTION
     Create new tenants, include tags or other object data if needed.
-    
-    .PARAMETER Url
-    Your netbox Url
     
     .PARAMETER tenantName
     Name of the new Tenant (customer)
@@ -148,11 +140,12 @@ Function New-NetboxTenant {
     }
 
     New-NetboxTenant -Url "https://myinternal.domain.local" -tenantName "TurboTenant" -tags ("tag123","cooltenant") -objectData $ownAddition -LogToFile $false
+
+    if you have nothing extra to add just skip objectData and if there are no tags, you can skip that aswell.
+    New-NetboxTenant -Url "https://myinternal.domain.local" -tenantName "TurboTenant" -LogToFile $false
     
     #>
     param(
-        [parameter(mandatory)]
-        $Url,
         [parameter(mandatory)]
         $tenantName,
         $objectData,
@@ -162,7 +155,6 @@ Function New-NetboxTenant {
         $LogToFile
     )
     if (Find-NetboxConnection){
-        $tenantName = Remove-BadStringCharacters($tenantName)
         $tenantObject = @{
             name = $tenantName
             slug = Remove-SpecialCharacters($tenantName)
@@ -171,24 +163,60 @@ Function New-NetboxTenant {
             $tenantObject += $objectData
         }
         if ($tags){
-            $tagObject = @{
-                tags = @()
-            }
-            foreach ($tag in $tags){
-                $tagObject.tags += @{
-                    name = "$tag"
-                    slug = "$tag"
-                }
-            }
-            $tenantObject += $tagObject
+            $tenantObject += BuildTagsObject -Tags $tags
         }
         
         $tenantObject = $tenantObject | ConvertTo-Json -Compress
         
         Invoke-TryCatchLog -LogType CREATE -InfoLog "Creating new Netbox Tenant: $tenantName" -LogToFile $LogToFile -ScriptBlock {
-            Invoke-RestMethod -Method POST -Uri "$Url/api/tenancy/tenants/" -Headers $netboxAuthenticationHeader -Body $tenantObject -ContentType "application/json"
+            Invoke-RestMethod -Method POST -Uri "$netboxUrl/api/tenancy/tenants/" -Headers $netboxAuthenticationHeader -Body $tenantObject -ContentType "application/json"
         }
     }
+}
+
+function New-NetboxSite {
+    param(
+        [parameter(mandatory)]
+        $siteName,
+        $objectData,
+        [string[]]$tags,
+        [parameter(mandatory)]
+        [ValidateSet("True","False")]
+        $LogToFile
+    )
+    $siteObject = @{
+        name = $siteName
+        slug = Remove-SpecialCharacters($siteName)
+    }
+    if ($objectData){
+        $siteObject += $objectData
+    }
+    if ($tags){
+        $siteObject += BuildTagsObject -Tags $tags
+    }
+
+    $siteObject = $siteObject | ConvertTo-Json -Compress
+    
+    Invoke-TryCatchLog -LogType CREATE -InfoLog "Creating new Netbox Site: $siteName" -LogToFile $LogToFile -ScriptBlock {
+        Invoke-RestMethod -Method POST -Uri "$netboxUrl/api/dcim/sites/" -Headers $netboxAuthenticationHeader -Body $siteObject -ContentType "application/json"
+    }
+}
+
+function BuildTagsObject {
+    param(
+        [parameter(mandatory)]
+        [string[]]$Tags
+    )
+    $tagObject = @{
+        tags = @()
+    }
+    foreach ($tag in $Tags){
+        $tagObject.tags += @{
+            name = "$tag"
+            slug = "$tag"
+        }
+    }
+    return $tagObject
 }
 
 function Remove-NetboxObject {
@@ -198,9 +226,6 @@ function Remove-NetboxObject {
     
     .DESCRIPTION
     Remove any sort of Netbox Object by supplying its ID, APIEndpoint need to be set like  this example: '/api/tenancy/tenants/'
-    
-    .PARAMETER Url
-    Your Netbox URL
     
     .PARAMETER APIEndpoint
     The APIEndpoint for example: /api/tenancy/tenants/
@@ -219,8 +244,6 @@ function Remove-NetboxObject {
     #>
     Param(
         [parameter(mandatory)]
-        $Url,
-        [parameter(mandatory)]
         $APIEndpoint,
         [parameter(mandatory)]
         $ObjectID,
@@ -230,7 +253,7 @@ function Remove-NetboxObject {
     )
     if (Find-NetboxConnection){
         Invoke-TryCatchLog -LogType DELETE -InfoLog "Removing Netbox Object: $($APIEndpoint) - $($ObjectID)" -LogToFile $LogToFile -ScriptBlock {
-            Invoke-RestMethod -Method DELETE -Uri "$($Url)$($APIEndpoint)$($ObjectID)/" -Headers $netboxAuthenticationHeader -Body $DeleteObject -ContentType "application/json"
+            Invoke-RestMethod -Method DELETE -Uri "$($netboxUrl)$($APIEndpoint)$($ObjectID)/" -Headers $netboxAuthenticationHeader -Body $DeleteObject -ContentType "application/json"
         }
     }
 }
