@@ -61,6 +61,14 @@ Function Find-NetboxConnection {
     return $true
 }
 
+Function ConvertTo-ValidSlug {
+    param(
+        [parameter(mandatory)]
+        $InputString
+    )
+    return (Remove-SpecialCharacters($InputString)).replace(" ","-").replace([char]0xA0,"-")
+}
+
 Function Get-NetboxObjects {
     <#
     .SYNOPSIS
@@ -156,8 +164,8 @@ Function New-NetboxTenant {
     )
     if (Find-NetboxConnection){
         $tenantObject = @{
-            name = $tenantName
-            slug = Remove-SpecialCharacters($tenantName)
+            name = $tenantName.replace([char]0xA0," ")
+            slug = ConvertTo-ValidSlug($tenantName)
         }
         if ($objectData){
             $tenantObject += $objectData
@@ -169,7 +177,7 @@ Function New-NetboxTenant {
         $tenantObject = $tenantObject | ConvertTo-Json -Compress
         
         Invoke-TryCatchLog -LogType CREATE -InfoLog "Creating new Netbox Tenant: $tenantName" -LogToFile $LogToFile -ScriptBlock {
-            Invoke-RestMethod -Method POST -Uri "$netboxUrl/api/tenancy/tenants/" -Headers $netboxAuthenticationHeader -Body $tenantObject -ContentType "application/json"
+            Invoke-RestMethod -Method POST -Uri "$netboxUrl/api/tenancy/tenants/" -Headers $netboxAuthenticationHeader -Body $tenantObject -ContentType "application/json;charset=utf-8"
         }
     }
 }
