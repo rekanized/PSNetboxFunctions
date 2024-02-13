@@ -171,7 +171,7 @@ Function New-NetboxTenant {
             $tenantObject += $objectData
         }
         if ($tags){
-            $tenantObject += BuildTagsObject -Tags $tags
+            $tenantObject += AddTagsToObject -newTags $tags
         }
         
         $tenantObject = $tenantObject | ConvertTo-Json -Compress
@@ -247,19 +247,22 @@ function New-NetboxSite {
     }
 }
 
-function BuildTagsObject {
+function AddTagsToObject {
     param(
+        $currentTags,
         [parameter(mandatory)]
-        [string[]]$Tags
+        [string[]]$newTags
     )
     $tagObject = @{
         tags = @()
     }
-    foreach ($tag in $Tags){
-        $tagObject.tags += @{
-            name = "$tag"
-            slug = "$tag"
+    if ($currentTags){
+        foreach ($tag in $currentTags){
+            $tagObject.tags += @{ name = "$tag" }
         }
+    }
+    foreach ($tag in $newTags){
+        $tagObject.tags += @{ name = "$tag" }
     }
     return $tagObject
 }
@@ -304,30 +307,33 @@ function Remove-NetboxObject {
 }
 
 function Update-NetboxTenant {
-    # NOT FINISHED
     param(
         [parameter(mandatory)]
+        $tenantObject,
         $tenantName,
-        $objectData,
-        [string[]]$tags,
+        $newData,
+        [string[]]$newTags,
         [parameter(mandatory)]
         [ValidateSet("True","False")]
         $LogToFile
     )
 
     if (Find-NetboxConnection){
-        $tenantObject = @{
-            name = $tenantName
-            slug = Remove-SpecialCharacters($tenantName)
+        $updateObject = @{
+            name = $tenantName.replace([char]0xA0," ")
+            slug = ConvertTo-ValidSlug($tenantName)
         }
-        if ($tenantObject){
-            $tenantObject += $objectData
+        if ($newData){
+            $updateObject += $newData
         }
         if ($tags){
-            $tenantObject += BuildTagsObject -Tags $tags
+            $updateObject += AddTagsToObject -CurrentTags $tenantObject.tags.name -NewTags $newTags
         }
-        Invoke-TryCatchLog -LogType UPDATE -InfoLog "Updating Netbox Tenant: $($tenantName)" -LogToFile $LogToFile -ScriptBlock {
-            #Invoke-RestMethod -Uri "$($netboxUrl)/api/tenancy/tenants/$($NetboxTenant.id)/" -Method PUT -Headers $netboxAuthenticationHeader -Body $tenantObject -ContentType "application/json"
+
+        $updateObject = $updateObject | ConvertTo-Json -Compress
+
+        Invoke-TryCatchLog -LogType UPDATE -InfoLog "Updating Netbox Tenant: $($tenantName) - $($tenantObject.id)" -LogToFile $LogToFile -ScriptBlock {
+            Invoke-RestMethod -Uri "$($netboxUrl)/api/tenancy/tenants/$($tenantObject.id)/" -Method PATCH -Headers $netboxAuthenticationHeader -Body $updateObject -ContentType "application/json;charset=utf-8"
         }
     }
 }
