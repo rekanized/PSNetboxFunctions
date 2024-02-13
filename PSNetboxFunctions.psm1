@@ -262,7 +262,9 @@ function AddTagsToObject {
         }
     }
     foreach ($tag in $newTags){
-        $tagObject.tags += @{ name = "$tag" }
+        if ($tag -notin $currentTags){
+            $tagObject.tags += @{ name = "$tag" }
+        }
     }
     return $tagObject
 }
