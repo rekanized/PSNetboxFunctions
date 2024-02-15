@@ -242,7 +242,7 @@ function New-NetboxSite {
 
     $siteObject = $siteObject | ConvertTo-Json -Compress
     
-    Invoke-TryCatchLog -LogType CREATE -InfoLog "Creating new Netbox Site: $siteName" -LogToFile $LogToFile -ScriptBlock {
+    Invoke-TryCatchLog -LogType CREATE -InfoLog "Creating new Netbox Site: $siteName - $siteObject" -LogToFile $LogToFile -ScriptBlock {
         Invoke-RestMethod -Method POST -Uri "$netboxUrl/api/dcim/sites/" -Headers $netboxAuthenticationHeader -Body $siteObject -ContentType "application/json"
     }
 }
@@ -302,7 +302,7 @@ function Remove-NetboxObject {
         $LogToFile
     )
     if (Find-NetboxConnection){
-        Invoke-TryCatchLog -LogType DELETE -InfoLog "Removing Netbox Object: $($APIEndpoint) - $($ObjectID)" -LogToFile $LogToFile -ScriptBlock {
+        Invoke-TryCatchLog -LogType DELETE -InfoLog "Removing Netbox Object: $APIEndpoint - $ObjectID" -LogToFile $LogToFile -ScriptBlock {
             Invoke-RestMethod -Method DELETE -Uri "$($netboxUrl)$($APIEndpoint)$($ObjectID)/" -Headers $netboxAuthenticationHeader -Body $DeleteObject -ContentType "application/json"
         }
     }
@@ -334,8 +334,8 @@ function Update-NetboxTenant {
 
         $updateObject = $updateObject | ConvertTo-Json -Compress
 
-        Invoke-TryCatchLog -LogType UPDATE -InfoLog "Updating Netbox Tenant: $($tenantName) - $($tenantObject.id)" -LogToFile $LogToFile -ScriptBlock {
-            Invoke-RestMethod -Uri "$($netboxUrl)/api/tenancy/tenants/$($tenantObject.id)/" -Method PATCH -Headers $netboxAuthenticationHeader -Body $updateObject -ContentType "application/json;charset=utf-8"
+        Invoke-TryCatchLog -LogType UPDATE -InfoLog "Updating Netbox Tenant: $tenantName - $($tenantObject.id) - $updateObject" -LogToFile $LogToFile -ScriptBlock {
+            Invoke-RestMethod -Uri "$netboxUrl/api/tenancy/tenants/$($tenantObject.id)/" -Method PATCH -Headers $netboxAuthenticationHeader -Body $updateObject -ContentType "application/json;charset=utf-8"
         }
     }
 }
