@@ -237,7 +237,7 @@ function New-NetboxSite {
         $siteObject += $objectData
     }
     if ($tags){
-        $siteObject += BuildTagsObject -Tags $tags
+        $siteObject += AddTagsToObject -newTags $tags
     }
 
     $siteObject = $siteObject | ConvertTo-Json -Compress
@@ -248,6 +248,28 @@ function New-NetboxSite {
 }
 
 function AddTagsToObject {
+    <#
+    .SYNOPSIS
+    Add Tags to a Object
+    
+    .DESCRIPTION
+    Make sure that tags are not being overwritten, add them to the other current tags, or just add new ones
+    
+    .PARAMETER currentTags
+    Array of current tags, only used if you want to keep your current tags on the object
+    
+    .PARAMETER newTags
+    Array of the new Tags you want to apply
+    
+    .EXAMPLE
+    Add new tags and keep the current ones aswell.
+    AddTagsToObject -CurrentTags $tenantObject.tags.name -NewTags $newTags
+
+    Only add new Tags
+    AddTagsToObject -NewTags $newTags
+
+    Usually used in combination when updated Tenant or other Object.
+    #>
     param(
         $currentTags,
         [parameter(mandatory)]
@@ -309,6 +331,48 @@ function Remove-NetboxObject {
 }
 
 function Update-NetboxTenant {
+    <#
+    .SYNOPSIS
+    Update a Netbox Tenant
+    
+    .DESCRIPTION
+    Update a Netbox Tenant with your own object values and ability to add new tags
+    
+    .PARAMETER tenantObject
+    Input a complete Tenant Object so we have all properties from the current Tenant.
+    
+    .PARAMETER tenantName
+    tenantName if you want to change the current name, this will also update the slug
+    
+    .PARAMETER newData
+    Input a Powershell Object of which attribute you want to update, for example.
+    $customAddition = @{
+        custom_fields = @{
+            customer_id = "123123"
+        }
+    }
+
+    -newData $customAddition
+    
+    .PARAMETER newTags
+    -newTags ("Tag1","Tag2")
+    
+    .PARAMETER LogToFile
+    Connect to PSLoggingFunctions module, read more on GitHub, it create a Log folder in your directory if set to True
+    
+    .EXAMPLE
+    Update the Tenants name and add a tag called syncedtenant (must exist a tag with this name)
+    Update-NetboxTenant -tenantObject $NetboxTenant -tenantName "NewTenantName" -newTags ("syncedtenant") -LogToFile $True
+
+    Update the customer with your own custom value
+    $customAddition = @{
+        custom_fields = @{
+            customer_id = "123123"
+        }
+    }
+    Update-NetboxTenant -tenantObject $NetboxTenant -newData $customAddition -LogToFile $True
+
+    #>
     param(
         [parameter(mandatory)]
         $tenantObject,
@@ -321,15 +385,18 @@ function Update-NetboxTenant {
     )
 
     if (Find-NetboxConnection){
-        $updateObject = @{
-            name = $tenantName.replace([char]0xA0," ")
-            slug = ConvertTo-ValidSlug($tenantName)
+        $updateObject = @{}
+        if ($tenantName){
+            $updateObject += @{
+                name = $tenantName.replace([char]0xA0," ")
+                slug = ConvertTo-ValidSlug($tenantName)
+            }
         }
         if ($newData){
             $updateObject += $newData
         }
         if ($tags){
-            $updateObject += AddTagsToObject -CurrentTags $tenantObject.tags.name -NewTags $newTags
+            $updateObject += AddTagsToObject -CurrentTags $tenantObject.tags.name -newTags $newTags
         }
 
         $updateObject = $updateObject | ConvertTo-Json -Compress
