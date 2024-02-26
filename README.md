@@ -71,3 +71,17 @@ New-NetboxSite -siteName "My-road 12B" -tags ("tag123","coolsite") -objectData $
 # if you have nothing extra to add just skip objectData and if there are no tags, you can skip that aswell.
 New-NetboxSite -siteName "My-road 12B" -LogToFile $false
 ```
+
+## Update-NetboxTenant
+```powershell
+# Update the Tenants name and add a tag called syncedtenant (must exist a tag with this name)
+Update-NetboxTenant -tenantObject $NetboxTenant -tenantName "NewTenantName" -newTags ("syncedtenant") -LogToFile $True
+
+# Update the customer with your own custom value
+$customAddition = @{
+    custom_fields = @{
+        customer_id = "123123"
+    }
+}
+Update-NetboxTenant -tenantObject $NetboxTenant -newData $customAddition -LogToFile $True
+```
