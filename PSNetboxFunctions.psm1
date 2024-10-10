@@ -97,7 +97,7 @@ Function Get-NetboxObjects {
     )
     if (Find-NetboxConnection){
         $Devices = @()
-        $uri = "$($netboxUrl)$($APIEndpoint)?limit=0"
+        $uri = "$($netboxUrl)$($APIEndpoint)"
         do {
             $uri = $uri -replace("http://","https://")
             $Results = Invoke-TryCatchLog -InfoLog "Retrieving 1000 Netbox Objects from Endpoint: $APIEndpoint" -LogToFile $LogToFile -ScriptBlock {
